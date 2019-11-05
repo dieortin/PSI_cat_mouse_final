@@ -1,19 +1,29 @@
-from enum import Enum, auto
+from enum import auto, IntEnum
 
 from django.db import models
 from django.contrib.auth.models import User
 
 
-class GameStatus:
-    CREATED = "C"
-    ACTIVE = "A"
-    FINISHED = "F"
+class GameStatus(IntEnum):
+    CREATED = auto()
+    ACTIVE = auto()
+    FINISHED = auto()
 
-    choices = [
-        (CREATED, "Created"),
-        (ACTIVE, "Active"),
-        (FINISHED, "Finished"),
-    ]
+    @classmethod
+    def choices(cls):
+        return [(i.value, i.name) for i in cls]
+
+
+# class GameStatus:
+#     CREATED = "C"
+#     ACTIVE = "A"
+#     FINISHED = "F"
+#
+#     choices = [
+#         (CREATED, "Created"),
+#         (ACTIVE, "Active"),
+#         (FINISHED, "Finished"),
+#     ]
 
 
 # Create your models here.
@@ -41,7 +51,7 @@ class Game(models.Model):
     cat_turn = models.BooleanField(null=False, blank=False, default=True)
 
     # Current game status
-    status = models.CharField(choices=GameStatus.choices, null=False, max_length=64,
+    status = models.IntegerField(choices=GameStatus.choices(), null=False, max_length=64,
                               default=GameStatus.CREATED)
 
     def save(self, *args, **kwargs):
