@@ -26,7 +26,7 @@ SECRET_KEY = 'mrpv*zn3x01&9bly%l90ftv=hdg9()mi--j8i)a-3pb1w_$+ox'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = [u'afternoon-journey-03892.herokuapp.com', u'127.0.0.1']
 
 
 # Application definition
