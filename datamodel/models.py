@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import auto, Enum
 
 from django.core.exceptions import ValidationError
@@ -111,6 +112,15 @@ class Game(models.Model):
 class Move(models.Model):
     origin = models.IntegerField(null=False, blank=False)
     target = models.IntegerField(null=False, blank=False)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE)
+    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="moves")
     player = models.ForeignKey(User, on_delete=models.CASCADE)
-    date = models.DateField(null=False)
+    date = models.DateField(null=False, default=datetime.now)
+
+    def save(self, *args, **kwargs):
+        self.clean()
+
+        super().save(*args, **kwargs)
+
+    def clean(self):
+        if self.game.status != GameStatus.ACTIVE:
+            raise ValidationError("Move not allowed")
