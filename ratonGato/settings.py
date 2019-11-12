@@ -17,7 +17,8 @@ import dj_database_url
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
-STATIC_ROOT = os.path.join(BASE_DIR, "static/")
+
+STATIC_ROOT = "staticfiles"
 
 
 # Quick-start development settings - unsuitable for production
