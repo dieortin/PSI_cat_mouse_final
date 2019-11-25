@@ -16,6 +16,23 @@ from django.contrib.auth.models import User
 #         print(tuple((x.name, x.value) for x in cls))
 #         return tuple((x.name, x.value) for x in cls)
 
+# class SingletonModel(models.Model):
+#     class Meta:
+#         abstract = True
+#
+#     def save(self, *args, **kwargs):
+#         self.pk = 1
+#         super(SingletonModel, self).save(*args, **kwargs)
+#
+#     def delete(self, *args, **kwargs):
+#         pass
+#
+#     @classmethod
+#     def load(cls):
+#         obj, created = cls.objects.get_or_create(pk=1)
+#         return obj
+
+
 class GameStatus():
     CREATED = "Created"
     ACTIVE = "Active"
@@ -112,7 +129,8 @@ class Game(models.Model):
 class Move(models.Model):
     origin = models.IntegerField(null=False, blank=False)
     target = models.IntegerField(null=False, blank=False)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE, related_name="moves")
+    game = models.ForeignKey(Game, on_delete=models.CASCADE,
+                             related_name="moves")
     player = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField(null=False, default=datetime.now)
 
@@ -124,3 +142,45 @@ class Move(models.Model):
     def clean(self):
         if self.game.status != GameStatus.ACTIVE:
             raise ValidationError("Move not allowed")
+
+
+# class SingletonModel(models.Model):
+#     def validate_single_instance(self):
+#         if self.objects.count() > 0 and self.id != self.objects.get().id:
+#             raise ValidationError("Insert not allowed")
+#
+#     def clean(self):
+#         self.validate_single_instance()
+#         super(SingletonModel, self).clean()
+
+class CounterManager(models.Manager):
+    def create(self, *args, **kwargs):
+        raise ValidationError("Insert not allowed - Create")
+
+    def get_or_create_counter(self):
+        try:
+            c = super(CounterManager, self).get()
+        except Counter.DoesNotExist:
+            c = Counter()
+
+        super(Counter, c).save()
+        return c
+
+    def get_current_value(self):
+        c = self.get_or_create_counter()
+        return c.value
+
+    def inc(self):
+        c = self.get_or_create_counter()
+        c.value += 1
+        super(Counter, c).save()
+
+        return c.value
+
+
+class Counter(models.Model):
+    value = models.PositiveIntegerField(default=0, editable=False)
+    objects = CounterManager()
+
+    def save(self, *args, **kwargs):
+        raise ValidationError("Insert not allowed")
