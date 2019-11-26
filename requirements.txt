@@ -1,2 +1,6 @@
 dj-config-url
 django
+psycopg2
+gunicorn
+pip
+static3
