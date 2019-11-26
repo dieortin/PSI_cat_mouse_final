@@ -90,21 +90,10 @@ class Game(models.Model):
             self.status = GameStatus.ACTIVE
 
         for e in [self.cat1, self.cat2, self.cat3, self.cat4, self.mouse]:
-            if not self.valid_square(e):
+            if not valid_square(e):
                 raise ValidationError("Invalid cell for a cat or the mouse")
 
         super().clean()
-
-    def valid_square(self, position):
-        if position > self.MAX_CELL or position < self.MIN_CELL:
-            return False
-        row = (position // 8) + 1
-        row_is_even = row % 2 == 0
-        square_is_even = position % 2 == 0
-        if row_is_even == square_is_even:
-            return False
-
-        return True
 
     def __str__(self):
         string = "({}, {})\t".format(self.id, self.status)
@@ -126,10 +115,37 @@ class Game(models.Model):
         return string
 
 
+def valid_square(position):
+    if position > Game.MAX_CELL or position < Game.MIN_CELL:
+        return False
+    row = (position // 8) + 1
+    row_is_even = row % 2 == 0
+    square_is_even = position % 2 == 0
+    if row_is_even == square_is_even:
+        return False
+
+    return True
+
+
+def valid_jump(origin, destination, is_mouse):
+    if not valid_square(origin) or not valid_square(destination):
+        return False
+    if is_mouse:
+        if abs(origin - destination) in [7, 9]:
+            return True
+        else:
+            return False
+    if not is_mouse:
+        if destination - origin in [7, 9]:
+            return True
+        else:
+            return False
+
+
 class Move(models.Model):
     origin = models.IntegerField(null=False, blank=False)
     target = models.IntegerField(null=False, blank=False)
-    game = models.ForeignKey(Game, on_delete=models.CASCADE,
+    game = models.ForeignKey(Game, null=True, on_delete=models.CASCADE,
                              related_name="moves")
     player = models.ForeignKey(User, on_delete=models.CASCADE)
     date = models.DateField(null=False, default=datetime.now)
@@ -137,14 +153,60 @@ class Move(models.Model):
     def save(self, *args, **kwargs):
         self.clean()
 
+        if self.origin == self.game.cat1:
+            self.game.cat1 = self.target
+        elif self.origin == self.game.cat2:
+            self.game.cat2 = self.target
+        elif self.origin == self.game.cat3:
+            self.game.cat3 = self.target
+        elif self.origin == self.game.cat4:
+            self.game.cat4 = self.target
+        elif self.origin == self.game.mouse:
+            self.game.mouse = self.target
+
+        self.game.cat_turn = not self.game.cat_turn
+
+        self.game.save()
+
         super().save(*args, **kwargs)
 
     def clean(self):
-        if self.game.status != GameStatus.ACTIVE:
-            raise ValidationError("Move not allowed")
+        if not self.game:
+            if not valid_square(self.origin) or not valid_square(self.target):
+                raise ValidationError("Move not allowed")
+
+        else:
+            if self.game.status != GameStatus.ACTIVE:
+                raise ValidationError("Move not allowed")
+            if not valid_jump(self.origin, self.target,
+                              self.player == self.game.mouse_user):
+                raise ValidationError("Move not allowed")
+            # Solo pueden mover los jugadores
+            if self.player != self.game.cat_user and self.player != self.game.mouse_user:
+                raise ValidationError("Move not allowed")
+
+            # for e in [self.game.cat1, self.game.cat2, self.game.cat3,
+            #           self.game.cat4, self.game.mouse]:
+            #     if e == self.target and self.target != self.origin:
+            #         raise ValidationError("Move not allowed")
+            # if self.origin not in [self.game.cat1, self.game.cat2,
+            #                        self.game.cat3, self.game.cat4,
+            #                        self.game.mouse]:
+            #     raise ValidationError("Move not allowed")
+
+            # No se puede mover fuera de turno
+            if self.player == self.game.mouse_user and self.game.cat_turn:
+                raise ValidationError("Move not allowed")
+            elif self.player == self.game.cat_user and not self.game.cat_turn:
+                raise ValidationError("Move not allowed")
+
+            # Los gatos no pueden mover hacia atrás
+            # if self.origin != self.game.mouse and self.target < self.origin:
+            #     raise ValidationError("Move not allowed")
+
+    # class SingletonModel(models.Model):
 
 
-# class SingletonModel(models.Model):
 #     def validate_single_instance(self):
 #         if self.objects.count() > 0 and self.id != self.objects.get().id:
 #             raise ValidationError("Insert not allowed")

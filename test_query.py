@@ -1,7 +1,7 @@
 import django
 import os
 
-os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'ratonGato.settings')
+os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mouse_cat.settings')
 django.setup()
 
 
