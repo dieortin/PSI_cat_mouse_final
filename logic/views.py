@@ -188,11 +188,11 @@ def move_service(request):
         if moveF.is_valid():
             newMove = moveF.save(commit=False)
             try:
-                game = Game.objects.get(id=request.session[constants.GAME_SELECTED_SESSION_ID])
+                game = Game.objects.get(
+                    id=request.session[constants.GAME_SELECTED_SESSION_ID])
             except Game.DoesNotExist:
                 return HttpResponse(status=404)
             newMove.game = game
             newMove.player = request.user
             newMove.save()
             return HttpResponse(status=200)
-

@@ -41,7 +41,7 @@
         <table id="chess_board">
         {% for item in board %}
             {% if forloop.counter0|divisibleby:8 %}<tr>{% endif %}
-            <td id="cell_{{ forloop.counter0}}"" style='width:20px;border:1px solid #000000;text-align:center;'>
+            <td id="cell_{{ forloop.counter0}}" style='width:20px;border:1px solid #000000;text-align:center;'>
                 {% if item ==  0 %}   x
                 {% elif item == 1 %}  &#9922;
                 {% else %}  &#9920; {% endif %}

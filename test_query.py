@@ -4,7 +4,6 @@ import os
 os.environ.setdefault('DJANGO_SETTINGS_MODULE', 'mouse_cat.settings')
 django.setup()
 
-
 from datamodel.models import *
 
 user10 = User.objects.get_or_create(id=10, username="user10")[0]
