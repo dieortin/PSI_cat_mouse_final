@@ -1,3 +1,4 @@
+dj-static
 dj-config-url
 django
 psycopg2
