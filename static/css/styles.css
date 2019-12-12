@@ -1,5 +1,4 @@
 
-
 .text-center {
     text-align: center !important;
 }
@@ -35,4 +34,32 @@
     height: auto;
     padding: 10px;
     font-size: 16px;
+}
+
+.square {
+    width: 12.5%;
+    padding-top: 12.5%;
+    position: relative;
+}
+
+.game-board {
+    max-width: 800px;
+}
+
+.game-board .square img {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    margin: auto;
+    width: 80%;
+}
+
+.odd .square.even, .even .square.odd {
+    background-color: rgba(0, 134, 255, 0.51);
+}
+
+.even .square.even, .odd .square.odd {
+    background-color: white;
 }
