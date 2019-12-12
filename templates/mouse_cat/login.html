@@ -1,16 +1,29 @@
 {% extends "mouse_cat/base.html" %}
+{% load static %}
 
 {% block content %}
-<div id="content">
-    <h1>Login</h1>
-    Log in to continue:
-    <form id="login_form" method="post" action="{% url 'login' %}">
+<div id="content" class="text-center">
+    <form id="login_form" class="form-signin" method="post" action="{% url 'login' %}">
         {% csrf_token %}
-        {{ user_form.as_p }}<br/>
+        <img class="mb-4 w-75" src="{% static "img/mouse-cat.png" %}">
+        <h1 class="h3 mb-3 font-weight-normal">Please sign in</h1>
+        {% for error in user_form.non_field_errors %}
+            <div class="alert alert-danger" role="alert">{{ error|escape }}</div>
+        {% endfor %}
+        <div class="fieldWrapper">
+            {{ user_form.username.errors }}
+            <label class="sr-only" for="{{ user_form.username.id_for_label }}">Your username:</label>
+            {{ user_form.username }}
+        </div>
+        <div class="fieldWrapper">
+            {{ user_form.password.errors }}
+            <label class="sr-only" for="{{ user_form.password.id_for_label }}">Password:</label>
+            {{ user_form.password }}
+        </div>
         <input type="hidden" name="return_service" value="{{ return_service }}" />
-        <input type="submit" value="Log-In" />
+        <input class="btn btn-lg btn-primary btn-block" type="submit" value="Sign in" />
     </form>
-    
+    <p>Don have an account? <a href="{% url 'signup' %}">Sign up</a></p>
     <p><a href="{% url 'landing' %}">Return to homepage</a></p>
 </div>
 {% endblock content %}

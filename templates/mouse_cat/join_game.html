@@ -1,13 +1,17 @@
 {% extends "mouse_cat/base.html" %}
 
 {% block content %}
-<div id="content">
-    <h1>Join game</h1>
-    {% if msg_error %}
-        <p class="error">ERROR: {{ msg_error }}</p>
-    {% else %}
-        <p><b>{{ game.mouse_user.username }}</b> succesfully joined to game <b>{{ game.id }}</b>. The game can start!!!</p>
-    {% endif %}
-    <p><a href="{% url 'landing' %}">Return to homepage</a></p>
-</div>
+    <div id="content" class="container pt-5">
+        <h1>Join game</h1>
+        {% if no_games %}
+            <p>Looks like there are no open games at this moment! Want to
+                create your own?</p>
+            <a href="{% url 'create_game' %}" class="btn btn-secondary mb-3">Create
+                a new game »</a>
+        {% else %}
+            <p>Excellent! You can now select the game in your games list, and start playing!</p>
+            <a href="{% url 'select_game' %}" class="btn btn-secondary mb-3">See my games »</a>
+        {% endif %}
+        <p><a href="{% url 'landing' %}">Return to homepage</a></p>
+    </div>
 {% endblock content %}

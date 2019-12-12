@@ -10,8 +10,8 @@ from datamodel.models import Move
 
 
 class UserForm(forms.Form):
-    username = forms.CharField(widget=forms.TextInput())
-    password = forms.CharField(widget=forms.PasswordInput())
+    username = forms.CharField(widget=forms.TextInput(attrs={'class':'form-control', 'placeholder': 'Username'}))
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'form-control', 'placeholder': 'Password'}))
 
     def clean(self):
         data = super(UserForm, self).clean()
@@ -30,8 +30,8 @@ class UserForm(forms.Form):
 
 
 class SignupForm(forms.ModelForm):
-    password = forms.CharField(widget=forms.PasswordInput())
-    password2 = forms.CharField(widget=forms.PasswordInput())
+    password = forms.CharField(widget=forms.PasswordInput(attrs={'class':'form-control', 'placeholder': 'Password'}))
+    password2 = forms.CharField(widget=forms.PasswordInput(attrs={'class':'form-control', 'placeholder': 'Confirm password'}))
 
     def clean(self):
         data = super(SignupForm, self).clean()
@@ -49,6 +49,9 @@ class SignupForm(forms.ModelForm):
     class Meta:
         model = User
         fields = ('username', 'password')
+        widgets = {
+            'username': forms.TextInput(attrs={'class':'form-control', 'placeholder': 'Username'}),
+        }
 
 
 class MoveForm(forms.ModelForm):

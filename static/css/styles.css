@@ -1,0 +1,38 @@
+
+
+.text-center {
+    text-align: center !important;
+}
+
+.form-signin, .form-register {
+    width: 100%;
+    max-width: 330px;
+    padding: 15px;
+    margin: auto;
+}
+
+.form-signin, .form-register input#id_username {
+    margin-bottom: -1px;
+    border-bottom-right-radius: 0;
+    border-bottom-left-radius: 0;
+}
+
+.form-register input#id_password {
+    margin-bottom: -1px;
+    border-radius: 0;
+
+}
+
+.form-signin input#id_password, .form-register input#id_password2 {
+    margin-bottom: 10px;
+    border-top-left-radius: 0;
+    border-top-right-radius: 0;
+}
+
+.form-signin .form-control {
+    position: relative;
+    box-sizing: border-box;
+    height: auto;
+    padding: 10px;
+    font-size: 16px;
+}

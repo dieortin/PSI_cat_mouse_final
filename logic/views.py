@@ -78,7 +78,7 @@ def signup_service(request):
                 if u.is_active:
                     login(request, u)
                     request.session[constants.COUNTER_SESSION_ID] = 0
-            return render(request, "mouse_cat/signup.html")
+            return render(request, "mouse_cat/signup_old.html")
 
     else:
         form = SignupForm()
@@ -121,10 +121,14 @@ def join_game_service(request):
         print("Setting highestIdGame {} mouse user to {}".format(highestIdGame,
                                                                  request.user))
         highestIdGame.save()
-        return render(request, "mouse_cat/join_game.html")
+        return render(request, "mouse_cat/join_game.html", {
+            constants.SUCCESS_MESSAGE_ID: "Joined a game with {} successfully!".format(
+                highestIdGame.cat_user)
+        })
     else:
         return render(request, "mouse_cat/join_game.html", {
-            constants.ERROR_MESSAGE_ID: "There is no available games"
+            constants.ERROR_MESSAGE_ID: "There are no available games",
+            "no_games": True
         })
 
 
@@ -153,7 +157,7 @@ def select_game_service(request, game_id=None):
                         e.mouse_user != request.user)):
                     return HttpResponse(status=404)
                 request.session[constants.GAME_SELECTED_SESSION_ID] = game_id
-                return render(request, "mouse_cat/select_game.html")
+                return redirect(reverse('show_game'))
             except Game.DoesNotExist:
                 return HttpResponse(status=404)
 
@@ -175,8 +179,10 @@ def show_game_service(request):
     for e in [game.cat1, game.cat2, game.cat3, game.cat4]:
         board[e] = 1
 
+    form = MoveForm()
+
     return render(request, "mouse_cat/game.html",
-                  {"game": game, "board": board})
+                  {"game": game, "board": board, "move_form": form})
 
 
 @login_required
@@ -186,6 +192,7 @@ def move_service(request):
     elif request.method == "POST":
         moveF = MoveForm(request.POST)
         if moveF.is_valid():
+            print("bbellowefqwef")
             newMove = moveF.save(commit=False)
             try:
                 game = Game.objects.get(
@@ -196,3 +203,4 @@ def move_service(request):
             newMove.player = request.user
             newMove.save()
             return HttpResponse(status=200)
+        return HttpResponse(status=304)
