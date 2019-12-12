@@ -1,14 +1,20 @@
 $(document).ready(function () {
-    (function worker() {
-        $.ajax({
-            url: '/ajax_is_it_my_turn',
-            success: function (data) {
-                if (data["my_turn"] === false) {
-                    setTimeout(worker, 5000);
-                }
-            }
-        });
-    })();
+    // If it isn't my turn, keep checking periodically for it and reload when that changes
+    isItMyTurn(function (myTurn) {
+        if (!myTurn) {
+            console.log("not my turn");
+            $('#cat-waiting, #mouse-waiting').removeClass('hidden');
+            (function worker() {
+                isItMyTurn(function (d) {
+                    if (!d) {
+                        setTimeout(worker, 5000);
+                    } else {
+                        location.reload();
+                    }
+                })
+            })();
+        }
+    });
     $(".square").click(function () {
         if ($(this).hasClass("possible-move")) {
             let pos = $(this).attr('id').replace("square-", "");
@@ -33,6 +39,15 @@ function removeSelectedAndPossible() {
 
 let selectedOrigin = null;
 
+function isItMyTurn(handler) {
+    $.ajax({
+        url: '/ajax_is_it_my_turn',
+        success: function (data) {
+            handler(data["my_turn"]);
+        }
+    });
+}
+
 function requestPossibleMoves(position) {
     $.ajax({
         url: '/get_possible_moves_from_position/' + position,
@@ -51,24 +66,18 @@ function requestPossibleMoves(position) {
 function makeMove(origin, target) {
     $.ajax({
         url: "/ajax_make_move/" + origin + "/" + target,
-        success: function (result) {
+        success: function () {
             $("#square-" + origin + " img").appendTo($("#square-" + target));
-            console.log($(".selected-piece, .possible-move"));
             $(".selected-piece, .possible-move").removeClass("selected-piece possible-move");
             $("#cat-waiting, #mouse-waiting").removeClass("hidden");
             (function worker() {
-                $.ajax({
-                    url: '/ajax_is_it_my_turn',
-                    success: function (data) {
-                        if (data["my_turn"]) {
-                            location.reload();
-                        }
-                    },
-                    complete: function () {
-                        // Schedule the next request when the current one's complete
-                        setTimeout(worker, 5000);
+                isItMyTurn(function (d) {
+                    if (!d) {
+                        setTimeout(worker, 2000);
+                    } else {
+                        location.reload();
                     }
-                });
+                })
             })();
         },
         error: function (xhr, ajaxOptions, thrownError) {
@@ -76,4 +85,3 @@ function makeMove(origin, target) {
         }
     })
 }
-

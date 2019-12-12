@@ -79,7 +79,7 @@ def signup_service(request):
                 if u.is_active:
                     login(request, u)
                     request.session[constants.COUNTER_SESSION_ID] = 0
-            return render(request, "mouse_cat/signup_old.html")
+            return render(request, "mouse_cat/signup.html")
 
     else:
         form = SignupForm()
