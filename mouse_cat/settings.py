@@ -78,7 +78,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'mouse_cat.wsgi.application'
 
-print(os.getenv('SQLITE', False))
 if os.getenv('SQLITE', False):
     # Database
     # https://docs.djangoproject.com/en/2.2/ref/settings/#databases
