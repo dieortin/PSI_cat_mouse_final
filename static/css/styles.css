@@ -43,7 +43,7 @@
 }
 
 .game-board {
-    max-width: 800px;
+    max-width: 95vh;
 }
 
 .game-board .square img {
