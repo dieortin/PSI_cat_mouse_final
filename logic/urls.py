@@ -16,5 +16,11 @@ urlpatterns = [
     path('select_game_service/', views.select_game_service,
          name='select_game'),
     path('show_game_service/', views.show_game_service, name='show_game'),
-    path('move_service/', views.move_service, name='move')
+    path('move_service/', views.move_service, name='move'),
+    path('ajax_make_move/<int:origin>/<int:target>', views.ajax_make_move,
+         name="ajax_make_move"),
+    path('get_possible_moves_from_position/<int:position>',
+         views.get_possible_moves_from_position, name='get_possible_moves'),
+    path('ajax_is_it_my_turn', views.ajax_is_it_my_turn,
+         name='ajax_is_it_my_turn')
 ]

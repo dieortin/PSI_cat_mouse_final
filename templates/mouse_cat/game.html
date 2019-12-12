@@ -3,7 +3,7 @@
 
 {% block content %}
     <div id="content" class="container pt-5">
-        {% if game.cat_user == request.user %}
+        {% if user_is_cat %}
             <h1>Game against <i>{{ game.mouse_user }}</i></h1>
         {% else %}
             <h1>Game against <i>{{ game.cat_user }}</i></h1>
@@ -13,31 +13,21 @@
             {% csrf_token %}
             <p>
                 Cats: <b>{{ game.cat_user.username }}</b>
-                {% if game.cat_user.id == request.user.id %}
-                    <blockquote class="cat">
-                        {% if game.cat_turn %}
-                            {{ move_form }}
-                            <input type="submit" value="Move"/>
-                        {% else %}
+                {% if user_is_cat %}
+                    <blockquote id="cat-waiting" class="hidden">
                             Waiting for the mouse...
                             <a style="margin-left:20px;font-weight:normal"
                                href="{% url 'show_game' %}">Refresh</a>
-                        {% endif %}
                     </blockquote>
                 {% endif %}
             </p>
             <p>
                 Mouse: <b>{{ game.mouse_user.username }}</b>
-                {% if game.mouse_user.id == request.user.id %}
-                    <blockquote class="mouse">
-                        {% if not game.cat_turn %}
-                            {{ move_form }}
-                            <input type="submit" value="Move"/>
-                        {% else %}
+                {% if not user_is_cat %}
+                    <blockquote id="mouse-waiting" class="hidden">
                             Waiting for the cat...
                             <a style="margin-left:20px;font-weight:normal"
                                href="{% url 'show_game' %}">Refresh</a>
-                        {% endif %}
                     </blockquote>
                 {% endif %}
             </p>
@@ -48,14 +38,28 @@
                 {% for item in board %}
                     {% if forloop.counter0|divisibleby:8 %}
                         <div class="row {% cycle 'even' 'odd' %}">{% endif %}
-                <div class="col square {% cycle 'even' 'odd' %}">
+                <div class="col square {% cycle 'even' 'odd' %}"
+                     id="square-{{ item.number }}">
                     <div class="">
-                        {% if item == 0 %}
-                        {% elif item == 1 %}
-                            <img src="{% static 'img/cat.png' %}" alt="Cat">
-                        {% else %}
-                            <img src="{% static 'img/mouse.png' %}"
-                                 alt="Mouse">
+                        {% if item.cat %}
+                            {% if user_is_cat %}
+                                <img class="ours"
+                                     src="{% static 'img/cat-selected.png' %}"
+                                     alt="Cat">
+                            {% else %}
+                                <img src="{% static 'img/cat.png' %}"
+                                     alt="Cat">
+                            {% endif %}
+                        {% elif item.mouse %}
+                            {% if not user_is_cat %}
+                                <img class="ours"
+                                     src="{% static 'img/mouse-selected.png' %}"
+                                     alt="Mouse">
+                            {% else %}
+                                <img src="{% static 'img/mouse.png' %}"
+                                     alt="Mouse">
+                            {% endif %}
+
                         {% endif %}
                     </div>
 

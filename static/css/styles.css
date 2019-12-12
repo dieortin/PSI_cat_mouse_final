@@ -63,3 +63,16 @@
 .even .square.even, .odd .square.odd {
     background-color: white;
 }
+
+
+.selected-piece, .possible-move {
+    box-shadow: inset 0 0 5px 5px #007bff;
+}
+
+.possible-move {
+    background-color: rgb(251, 255, 198) !important;
+}
+
+.hidden {
+    display: none !important;
+}

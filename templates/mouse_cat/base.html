@@ -5,8 +5,8 @@
           href="https://stackpath.bootstrapcdn.com/bootstrap/4.4.1/css/bootstrap.min.css"
           integrity="sha384-Vkoo8x4CGsO3+Hhxv8T/Q5PaXtkKtu6ug5TOeNV6gBiFeWPGFN9MuhOf23Q9Ifjh"
           crossorigin="anonymous">
-    <script src="https://code.jquery.com/jquery-3.4.1.slim.min.js"
-            integrity="sha384-J6qa4849blE2+poT4WnyKhv5vZF5SrPo0iEjwBvKU7imGFAV0wwj1yYfoRSJoZ+n"
+    <script src="https://code.jquery.com/jquery-3.4.1.min.js"
+            integrity="sha384-vk5WoKIaW/vJyUAd9n/wmopsmNhiy+L2Z+SBxGYnUkunIxVxAv/UtMOhba/xskxh"
             crossorigin="anonymous"></script>
     <script src="https://cdn.jsdelivr.net/npm/popper.js@1.16.0/dist/umd/popper.min.js"
             integrity="sha384-Q6E9RHvbIyZFJoft+2mJbHaEWldlvI9IOYy5n3zV9zzTtmI3UksdQRVvoxMfooAo"
@@ -49,23 +49,32 @@
                 <span
                         class="sr-only">(current)</span></a>
             {% if request.user.is_authenticated %}
-                <a class="nav-item nav-link" href="{% url 'create_game' %}">New game</a>
-                <a class="nav-item nav-link" href="{% url 'join_game' %}">Join game</a>
+                <a class="nav-item nav-link" href="{% url 'create_game' %}">New
+                    game</a>
+                <a class="nav-item nav-link" href="{% url 'join_game' %}">Join
+                    game</a>
                 <a class="nav-item nav-link" href="{% url 'select_game' %}">Play</a>
             {% else %}
-                <a class="nav-item nav-link disabled" aria-disabled="true" href="{% url 'create_game' %}" tabindex="-1">New game</a>
-                <a class="nav-item nav-link disabled" aria-disabled="true" href="{% url 'join_game' %}" tabindex="-1">Join game</a>
-                <a class="nav-item nav-link disabled" aria-disabled="true" href="{% url 'select_game' %}" tabindex="-1">Play</a>
+                <a class="nav-item nav-link disabled" aria-disabled="true"
+                   href="{% url 'create_game' %}" tabindex="-1">New game</a>
+                <a class="nav-item nav-link disabled" aria-disabled="true"
+                   href="{% url 'join_game' %}" tabindex="-1">Join game</a>
+                <a class="nav-item nav-link disabled" aria-disabled="true"
+                   href="{% url 'select_game' %}" tabindex="-1">Play</a>
             {% endif %}
         </div>
         <div class="text-white bg-primary d-flex flex-row align-items-center">
             {% if request.user.is_authenticated %}
                 <div class="py-2 mr-2">Logged in as
                     <b>{{ request.user.username }}</b></div>
-                <div class="py-2"><a class="btn btn-outline-light" href="{% url 'logout' %}">(Log out)</a></div>
+                <div class="py-2"><a class="btn btn-outline-light"
+                                     href="{% url 'logout' %}">(Log out)</a>
+                </div>
             {% else %}
                 <div class="py-2 mr-2">You're not logged in</div>
-                <div class="py-2"><a class="btn btn-outline-light" href="{% url 'login' %}">(Sign in)</a></div>
+                <div class="py-2"><a class="btn btn-outline-light"
+                                     href="{% url 'login' %}">(Sign in)</a>
+                </div>
             {% endif %}
         </div>
     </div>
@@ -88,5 +97,7 @@
 
 {% block footer %}
 {% endblock footer %}
+
+<script src="{% static 'js/main.js' %}"></script>
 </body>
 </html>

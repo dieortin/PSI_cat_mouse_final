@@ -1,12 +1,13 @@
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
+from django.core.exceptions import ValidationError
 from django.db.models import Q
-from django.http import HttpResponseForbidden, HttpResponse
+from django.http import HttpResponseForbidden, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
 
 from datamodel import constants
-from datamodel.models import Counter, Game, GameStatus
+from datamodel.models import Counter, Game, GameStatus, get_valid_jumps, Move
 from logic.forms import UserForm, SignupForm, MoveForm
 
 
@@ -163,6 +164,24 @@ def select_game_service(request, game_id=None):
 
 
 @login_required
+def ajax_is_it_my_turn(request):
+    if not constants.GAME_SELECTED_SESSION_ID in request.session:
+        return HttpResponse(status=404)
+
+    try:
+        game = Game.objects.get(
+            id=request.session[constants.GAME_SELECTED_SESSION_ID])
+    except Game.DoesNotExist:
+        return HttpResponse(status=404)
+
+    if (game.cat_turn and (game.cat_user == request.user)) or (
+            not game.cat_turn and game.mouse_user == request.user):
+        return JsonResponse({"my_turn": True})
+    else:
+        return JsonResponse({"my_turn": False})
+
+
+@login_required
 def show_game_service(request):
     if not constants.GAME_SELECTED_SESSION_ID in request.session:
         return HttpResponse(status=404)
@@ -173,16 +192,67 @@ def show_game_service(request):
     except Game.DoesNotExist:
         return HttpResponse(status=404)
 
-    board = [0] * 64
-    board[game.mouse] = -1
+    board = []
+
+    for i in range(0, 64):
+        board.append({
+            "number": i,
+            "mouse": False,
+            "cat": False
+        })
+
+    board[game.mouse]["mouse"] = True
 
     for e in [game.cat1, game.cat2, game.cat3, game.cat4]:
-        board[e] = 1
+        board[e]["cat"] = True
 
     form = MoveForm()
 
+    if game.cat_user == request.user:
+        user_is_cat = True
+    else:
+        user_is_cat = False
+
     return render(request, "mouse_cat/game.html",
-                  {"game": game, "board": board, "move_form": form})
+                  {"game": game, "board": board, "move_form": form,
+                   "user_is_cat": user_is_cat})
+
+
+@login_required
+def get_possible_moves_from_position(request, position):
+    if not constants.GAME_SELECTED_SESSION_ID in request.session:
+        return HttpResponse(status=404)
+
+    try:
+        game = Game.objects.get(
+            id=request.session[constants.GAME_SELECTED_SESSION_ID])
+    except Game.DoesNotExist:
+        return HttpResponse(status=404)
+
+    valid_jumps = get_valid_jumps(position, request.user, game)
+    return JsonResponse({"valid_jumps": valid_jumps})
+
+
+@login_required
+def ajax_make_move(request, origin, target):
+    if constants.GAME_SELECTED_SESSION_ID not in request.session:
+        return HttpResponse(status=404)
+
+    try:
+        game = Game.objects.get(
+            id=request.session[constants.GAME_SELECTED_SESSION_ID])
+    except Game.DoesNotExist:
+        return HttpResponse(status=404)
+
+    try:
+        newMove = Move(origin=origin, target=target, player=request.user,
+                       game=game)
+        newMove.save()
+        return HttpResponse(status=200)
+    except ValidationError:
+        return HttpResponse("El movimiento no está permitido", status=403)
+        # Movimiento no válido
+
 
 
 @login_required

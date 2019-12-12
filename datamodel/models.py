@@ -127,8 +127,12 @@ def valid_square(position):
     return True
 
 
-def valid_jump(origin, destination, is_mouse):
+def valid_jump(origin, destination, is_mouse, game):
     if not valid_square(origin) or not valid_square(destination):
+        return False
+
+    # No puede haber ya una pieza allí, aunque sea ella misma
+    if destination in [game.cat1, game.cat2, game.cat3, game.cat4, game.mouse]:
         return False
     if is_mouse:
         if abs(origin - destination) in [7, 9]:
@@ -140,6 +144,25 @@ def valid_jump(origin, destination, is_mouse):
             return True
         else:
             return False
+
+
+def get_valid_jumps(origin, user, game):
+    is_mouse = user == game.mouse_user
+
+    # Comprobar si es su turno
+    if is_mouse == game.cat_turn:
+        return []
+
+    valid_jumps = []
+    if is_mouse:
+        rg = [-9, -7, 7, 9]
+    else:
+        rg = [7, 9]
+    for i in rg:
+        if valid_jump(origin, origin + i, is_mouse, game):
+            valid_jumps.append(origin + i)
+
+    return valid_jumps
 
 
 class Move(models.Model):
@@ -179,7 +202,7 @@ class Move(models.Model):
             if self.game.status != GameStatus.ACTIVE:
                 raise ValidationError("Move not allowed")
             if not valid_jump(self.origin, self.target,
-                              self.player == self.game.mouse_user):
+                              self.player == self.game.mouse_user, self.game):
                 raise ValidationError("Move not allowed")
             # Solo pueden mover los jugadores
             if self.player != self.game.cat_user and self.player != self.game.mouse_user:
