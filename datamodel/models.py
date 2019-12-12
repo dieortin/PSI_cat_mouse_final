@@ -53,11 +53,16 @@ class GameStatus():
 class Game(models.Model):
     MIN_CELL = 0
     MAX_CELL = 63
+    MOUSE_WIN_CELLS = [0, 2, 4, 6]
 
     cat_user = models.ForeignKey(User, on_delete=models.CASCADE,
                                  related_name="games_as_cat")
     mouse_user = models.ForeignKey(User, on_delete=models.SET_NULL, null=True,
                                    blank=True, related_name="games_as_mouse")
+
+    winner = models.ForeignKey(User, null=True, blank=True,
+                               related_name="games_won",
+                               on_delete=models.SET_NULL)
 
     # Cat positions
     cat1 = models.IntegerField(null=False, blank=False, default=0,
@@ -82,6 +87,18 @@ class Game(models.Model):
 
     def save(self, *args, **kwargs):
         self.clean()
+
+        if self.mouse in self.MOUSE_WIN_CELLS:
+            print("Mouse is in winning cells")
+            self.status = GameStatus.FINISHED
+            self.winner = self.mouse_user
+
+        # Si la lista está vacía significa que no hay movimientos posibles
+        # para el ratón y los gatos ganan
+        if not get_valid_jumps(self.mouse, self.mouse_user, self,
+                               check_turn=False):
+            self.status = GameStatus.FINISHED
+            self.winner = self.cat_user
 
         super().save(*args, **kwargs)
 
@@ -146,11 +163,11 @@ def valid_jump(origin, destination, is_mouse, game):
             return False
 
 
-def get_valid_jumps(origin, user, game):
+def get_valid_jumps(origin, user, game, check_turn=True):
     is_mouse = user == game.mouse_user
 
     # Comprobar si es su turno
-    if is_mouse == game.cat_turn:
+    if is_mouse == game.cat_turn and check_turn:
         return []
 
     valid_jumps = []

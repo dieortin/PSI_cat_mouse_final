@@ -13,7 +13,8 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <h5 class="card-title">Game
-                                            with {{ game.mouse_user }}</h5>
+                                            with {{ game.mouse_user }}
+                                            ({{ game.id }})</h5>
                                         <a href="{% url 'select_game' game.id %}"
                                            class="btn btn-primary">Play! »</a>
                                         {% if game.cat_turn %}
@@ -51,7 +52,8 @@
                                 <div class="card">
                                     <div class="card-body">
                                         <h5 class="card-title">Game
-                                            with {{ game.cat_user }}</h5>
+                                            with {{ game.cat_user }}
+                                            ({{ game.id }})</h5>
                                         <a href="{% url 'select_game' game.id %}"
                                            class="btn btn-primary">Play! »</a>
                                         {% if not game.cat_turn %}

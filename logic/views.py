@@ -109,7 +109,9 @@ def create_game_service(request):
     newGame = Game.objects.create(cat_user=request.user)
     newGame.save()
 
-    return render(request, "mouse_cat/new_game.html")
+    return render(request, "mouse_cat/new_game.html", {
+        constants.SUCCESS_MESSAGE_ID: "Game creation complete"
+    })
 
 
 @login_required
@@ -174,6 +176,9 @@ def ajax_is_it_my_turn(request):
     except Game.DoesNotExist:
         return HttpResponse(status=404)
 
+    if game.status == GameStatus.FINISHED:
+        return JsonResponse({"my_turn": True})
+
     if (game.cat_turn and (game.cat_user == request.user)) or (
             not game.cat_turn and game.mouse_user == request.user):
         return JsonResponse({"my_turn": True})
@@ -215,7 +220,8 @@ def show_game_service(request):
 
     return render(request, "mouse_cat/game.html",
                   {"game": game, "board": board, "move_form": form,
-                   "user_is_cat": user_is_cat})
+                   "user_is_cat": user_is_cat,
+                   "is_active": game.status == GameStatus.ACTIVE})
 
 
 @login_required

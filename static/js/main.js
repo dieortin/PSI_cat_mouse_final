@@ -1,4 +1,14 @@
 $(document).ready(function () {
+    (function worker() {
+        $.ajax({
+            url: '/ajax_is_it_my_turn',
+            success: function (data) {
+                if (data["my_turn"] === false) {
+                    setTimeout(worker, 5000);
+                }
+            }
+        });
+    })();
     $(".square").click(function () {
         if ($(this).hasClass("possible-move")) {
             let pos = $(this).attr('id').replace("square-", "");
@@ -66,3 +76,4 @@ function makeMove(origin, target) {
         }
     })
 }
+

@@ -9,15 +9,15 @@
             <h1>Game against <i>{{ game.cat_user }}</i></h1>
         {% endif %}
         <p>Game: <b>{{ game.id }}</b></p>
-        <form id="move_form" method="post" action="{% url 'move' %}">
-            {% csrf_token %}
+        {% csrf_token %}
+        {% if is_active %}
             <p>
                 Cats: <b>{{ game.cat_user.username }}</b>
                 {% if user_is_cat %}
                     <blockquote id="cat-waiting" class="hidden">
-                            Waiting for the mouse...
-                            <a style="margin-left:20px;font-weight:normal"
-                               href="{% url 'show_game' %}">Refresh</a>
+                        Waiting for the mouse...
+                        <a style="margin-left:20px;font-weight:normal"
+                           href="{% url 'show_game' %}">Refresh</a>
                     </blockquote>
                 {% endif %}
             </p>
@@ -25,13 +25,20 @@
                 Mouse: <b>{{ game.mouse_user.username }}</b>
                 {% if not user_is_cat %}
                     <blockquote id="mouse-waiting" class="hidden">
-                            Waiting for the cat...
-                            <a style="margin-left:20px;font-weight:normal"
-                               href="{% url 'show_game' %}">Refresh</a>
+                        Waiting for the cat...
+                        <a style="margin-left:20px;font-weight:normal"
+                           href="{% url 'show_game' %}">Refresh</a>
                     </blockquote>
                 {% endif %}
             </p>
-        </form>
+        {% else %}
+            <h3>Game is finished!</h3>
+            {% if game.winner == request.user %}
+                <h3>You have won! Congratulations!</h3>
+            {% else %}
+                <h3>Your opponent has won, better luck next time!</h3>
+            {% endif %}
+        {% endif %}
 
         {% if board %}
             <div class="game-board container border border-primary">

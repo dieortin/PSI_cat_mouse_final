@@ -9,10 +9,17 @@
                 {% if request.user.is_authenticated %}
                     <h1 class="display-3">
                         Hello, {{ request.user.username }}!</h1>
+                    <p>Welcome back to <b>Mouse</b>x<b>Cat</b>! Ready for a
+                        quick game?</p>
+                    <p>
+                        <a class="btn btn-primary btn-lg"
+                           href="{% url 'select_game' %}"
+                           role="button">My games »</a>
+                    </p>
                 {% else %}
                     <h1 class="display-3">Hello there!</h1>
-                {% endif %}
-                <p>Welcome to <b>Mouse</b>x<b>Cat</b>! It's great that you're
+                    <p>Welcome to <b>Mouse</b>x<b>Cat</b>! It's great that
+                        you're
                     here,
                     but you need to log in to join the fun! </p>
                 <p>Don't have an account? Click the button below!</p>
@@ -20,6 +27,8 @@
                     <a class="btn btn-primary btn-lg" href="{% url 'signup' %}"
                        role="button">Create an account »</a>
                 </p>
+                {% endif %}
+
             </div>
         </div>
         {% if request.user.is_authenticated %}
