@@ -125,8 +125,12 @@ def create_game_service(request):
     new_games_by_user = Game.objects.filter(status=GameStatus.CREATED,
                                             cat_user=request.user)
     if new_games_by_user.count() > 0:
-        return respond_error(request,
+        messages.warning(request,
                              "You already have an open empty game, tell your friend to join that one instead!")
+        if "HTTP_REFERER" in request.META:
+            return redirect(request.META.get("HTTP_REFERER"))
+        else:
+            return render(request, "mouse_cat/index.html")
     newGame = Game.objects.create(cat_user=request.user)
     newGame.save()
 
@@ -190,7 +194,10 @@ def select_game_service(request, game_id=None):
                         g.mouse_user != request.user):
                     messages.error(request,
                                    "The game you're trying to select isn't yours")
-                    return redirect(reverse('select_game'))
+                    if "HTTP_REFERER" in request.META:
+                        return redirect(request.META.get("HTTP_REFERER"))
+                    else:
+                        return redirect(reverse('select_game'))
 
                 elif g.status == GameStatus.CREATED:
                     g.mouse_user = request.user
@@ -204,11 +211,17 @@ def select_game_service(request, game_id=None):
             except Game.DoesNotExist:
                 messages.error(request,
                                "The game you attempted to select doesn't exist")
-                return redirect(reverse('select_game'))
+                if "HTTP_REFERER" in request.META:
+                    return redirect(request.META.get("HTTP_REFERER"))
+                else:
+                    return redirect(reverse('select_game'))
             except ValidationError:
                 messages.error(request,
                                "There was an error while joining the game")
-                return redirect(reverse('select_game'))
+                if "HTTP_REFERER" in request.META:
+                    return redirect(request.META.get("HTTP_REFERER"))
+                else:
+                    return redirect(reverse('select_game'))
 
 
 def get_selected_game(request):
@@ -254,7 +267,10 @@ def show_game_service(request):
         game = get_selected_game(request)
     except Exception as e:
         messages.error(request, str(e))
-        return redirect(request.META.HTTP_REFERER)
+        if "HTTP_REFERER" in request.META:
+            return redirect(request.META.get("HTTP_REFERER"))
+        else:
+            return redirect(reverse('select_game'))
 
     board = []
 
@@ -340,7 +356,3 @@ def move_service(request):
             newMove.save()
             return HttpResponse(status=200)
         return respond_error(request, "The move you're making isn't valid")
-
-
-def handler404(request, exception, template_name="404.html"):
-    return render(request, "mouse_cat/../templates/404.html", 404)
