@@ -26,8 +26,7 @@
     {% block extra_head %}
 
     {% endblock extra_head %}
-    <title>{% block title %}PSI 2019-2020: Example of
-        application{% endblock %}</title>
+    <title>{% block title %}Mouse/x/Cat{% endblock %}</title>
 </head>
 
 <body id="body">
@@ -76,16 +75,11 @@
     </div>
 </nav>
 
-{% if msg_error %}
-    <p class="alert alert-danger">ERROR: {{ msg_error }}</p>
-{% endif %}
-
-{% if msg_success %}
-    <p class="alert alert-success">SUCCESS: {{ msg_success }}</p>
-{% endif %}
-
-{% if msg_info %}
-    <p class="alert alert-info">INFO: {{ msg_info }}</p>
+{% if messages %}
+    {% for message in messages %}
+        <p{% if message.tags %}
+            class="alert my-0 {{ message.tags }}"{% endif %}>{{ message }}</p>
+    {% endfor %}
 {% endif %}
 
 {% block content %}

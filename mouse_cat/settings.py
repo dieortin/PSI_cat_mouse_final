@@ -19,7 +19,16 @@ BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 MEDIA_ROOT = os.path.join(BASE_DIR, "media/")
 
-STATIC_ROOT = "staticfiles"
+STATIC_ROOT = "static"
+
+from django.contrib.messages import constants as messages
+
+MESSAGE_TAGS = {
+    messages.INFO: 'alert-info',
+    messages.WARNING: 'alert-warning',
+    messages.ERROR: 'alert-danger',
+    messages.SUCCESS: 'alert-success',
+}
 
 # Quick-start development settings - unsuitable for production
 # See https://docs.djangoproject.com/en/2.2/howto/deployment/checklist/
@@ -28,9 +37,7 @@ STATIC_ROOT = "staticfiles"
 SECRET_KEY = 'mrpv*zn3x01&9bly%l90ftv=hdg9()mi--j8i)a-3pb1w_$+ox'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-# TODO: Set this to False before deployment!
-# TODO: Create custom 404 page
-DEBUG = True
+DEBUG = False
 
 ALLOWED_HOSTS = [u'hidden-plateau-54306.herokuapp.com', u'127.0.0.1']
 
@@ -134,6 +141,6 @@ USE_TZ = True
 # https://docs.djangoproject.com/en/2.2/howto/static-files/
 
 STATIC_URL = '/static/'
-STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, "static")
-]
+# STATICFILES_DIRS = [
+#     os.path.join(BASE_DIR, "static")
+# ]

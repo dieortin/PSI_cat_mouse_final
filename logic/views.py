@@ -1,3 +1,4 @@
+from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
@@ -85,8 +86,16 @@ def signup_service(request):
                 if u.is_active:
                     login(request, u)
                     request.session[constants.COUNTER_SESSION_ID] = 0
+                    messages.success(request,
+                                     "Registration successful! You're now logged in")
                     return render(request, "mouse_cat/index.html")
-            return render(request, "mouse_cat/signup.html")
+                else:
+                    messages.error(request,
+                                   "Your account is deactivated, contact an administrator")
+            else:
+                messages.error(request,
+                               "An error ocurred while processing yor registration, please try again")
+                return render(request, "mouse_cat/signup.html")
 
     else:
         form = SignupForm()
@@ -121,9 +130,9 @@ def create_game_service(request):
     newGame = Game.objects.create(cat_user=request.user)
     newGame.save()
 
-    return render(request, "mouse_cat/new_game.html", {
-        constants.SUCCESS_MESSAGE_ID: "Game creation complete"
-    })
+    messages.success(request, "Game created successfully")
+
+    return render(request, "mouse_cat/select_game.html")
 
 
 # @login_required
@@ -149,8 +158,8 @@ def create_game_service(request):
 
 def respond_error(request, exception=None):
     increase_counter()
-    context_dict = {constants.ERROR_MESSAGE_ID: exception}
-    return render(request, "mouse_cat/error.html", context_dict)
+    messages.error(request, exception)
+    return render(request, "mouse_cat/error.html")
 
 
 @login_required
@@ -179,21 +188,27 @@ def select_game_service(request, game_id=None):
                 if (g.status != GameStatus.CREATED) and (
                         g.cat_user != request.user) and (
                         g.mouse_user != request.user):
-                    return respond_error(request,
-                                         "The game you're trying to select isn't yours")
+                    messages.error(request,
+                                   "The game you're trying to select isn't yours")
+                    return redirect(reverse('select_game'))
 
                 elif g.status == GameStatus.CREATED:
                     g.mouse_user = request.user
                     g.save()
+                    messages.info(request,
+                                  "You have joined the game with {}".format(
+                                      g.cat_user))
 
                 request.session[constants.GAME_SELECTED_SESSION_ID] = game_id
                 return redirect(reverse('show_game'))
             except Game.DoesNotExist:
-                return respond_error(request,
-                                     "The game you attempted to select doesn't exist")
+                messages.error(request,
+                               "The game you attempted to select doesn't exist")
+                return redirect(reverse('select_game'))
             except ValidationError:
-                return respond_error(request,
-                                     "There was an error while joining the game")
+                messages.error(request,
+                               "There was an error while joining the game")
+                return redirect(reverse('select_game'))
 
 
 def get_selected_game(request):
@@ -221,7 +236,7 @@ def ajax_is_it_my_turn(request):
     try:
         game = get_selected_game(request)
     except Exception as e:
-        return respond_error(request, str(e))
+        return HttpResponse(str(e), 400)
 
     if game.status == GameStatus.FINISHED:
         return JsonResponse({"my_turn": True})
@@ -238,7 +253,8 @@ def show_game_service(request):
     try:
         game = get_selected_game(request)
     except Exception as e:
-        return respond_error(request, str(e))
+        messages.error(request, str(e))
+        return redirect(request.META.HTTP_REFERER)
 
     board = []
 
@@ -324,3 +340,7 @@ def move_service(request):
             newMove.save()
             return HttpResponse(status=200)
         return respond_error(request, "The move you're making isn't valid")
+
+
+def handler404(request, exception, template_name="404.html"):
+    return render(request, "mouse_cat/../templates/404.html", 404)

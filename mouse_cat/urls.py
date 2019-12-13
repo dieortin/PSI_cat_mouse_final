@@ -16,8 +16,10 @@ Including another URLconf
 from django.contrib import admin
 from django.urls import path, include
 
+# handler404 = 'logic.views.handler404'
+
 urlpatterns = [
     path('admin/', admin.site.urls),
     path('datamodel/', include("datamodel.urls")),
-    path('', include('logic.urls'))
+    path('', include('logic.urls')),
 ]
