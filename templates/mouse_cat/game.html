@@ -1,6 +1,12 @@
 {% extends "mouse_cat/base.html" %}
 {% load staticfiles %}
 
+{% block extra_scripts %}
+
+    <script src="{% static 'js/game.js' %}"></script>
+
+{% endblock %}
+
 {% block content %}
     <div id="content" class="container pt-5">
         {% if user_is_cat %}
@@ -80,3 +86,4 @@
         <p><a href="{% url 'landing' %}">Return to homepage</a></p>
     </div>
 {% endblock content %}
+

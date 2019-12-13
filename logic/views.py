@@ -10,9 +10,14 @@ from datamodel.models import Counter, Game, GameStatus, get_valid_jumps, Move
 from logic.forms import UserForm, SignupForm, MoveForm
 
 
+def increase_counter():
+    Counter.objects.inc()
+
+
 def anonymous_required(f):
     def wrapped(request):
         if request.user.is_authenticated:
+            increase_counter()
             return HttpResponseForbidden(
                 errorHTTP(request,
                           exception="Action restricted to anonymous users"))
@@ -72,12 +77,15 @@ def signup_service(request):
             user.set_password(user.password)
             user.save()
 
-            u = authenticate(username=user.username, password=user.password)
+            print(form.cleaned_data)
+            u = authenticate(username=form.cleaned_data["username"],
+                             password=form.cleaned_data["password"])
 
             if u is not None:
                 if u.is_active:
                     login(request, u)
                     request.session[constants.COUNTER_SESSION_ID] = 0
+                    return render(request, "mouse_cat/index.html")
             return render(request, "mouse_cat/signup.html")
 
     else:
@@ -134,6 +142,12 @@ def join_game_service(request):
         })
 
 
+def respond_error(request, exception=None):
+    increase_counter()
+    context_dict = {constants.ERROR_MESSAGE_ID: exception}
+    return render(request, "mouse_cat/error.html", context_dict)
+
+
 @login_required
 def select_game_service(request, game_id=None):
     if request.method == "GET":
@@ -154,26 +168,44 @@ def select_game_service(request, game_id=None):
         else:
             try:
                 e = Game.objects.get(id=game_id)
-                if e.status != GameStatus.ACTIVE or (
-                        (e.cat_user != request.user) and (
-                        e.mouse_user != request.user)):
-                    return HttpResponse(status=404)
+                if (e.status != GameStatus.CREATED) and (
+                        e.cat_user != request.user) and (
+                        e.mouse_user != request.user):
+                    return respond_error(request,
+                                         "The game you're trying to select isn't yours")
                 request.session[constants.GAME_SELECTED_SESSION_ID] = game_id
                 return redirect(reverse('show_game'))
             except Game.DoesNotExist:
-                return HttpResponse(status=404)
+                return respond_error(request,
+                                     "The game you attempted to select doesn't exist")
+
+
+def get_selected_game(request):
+    try:
+        if constants.GAME_SELECTED_SESSION_ID not in request.session:
+            increase_counter()
+            raise Exception("No game has been selected")
+        game = Game.objects.get(
+            id=request.session[constants.GAME_SELECTED_SESSION_ID])
+        if game.cat_user != request.user and game.mouse_user != request.user:
+            raise Exception(
+                "The user doesn't participate in the selected game")
+
+        return game
+    except Game.DoesNotExist:
+        increase_counter()
+        raise Exception("The selected game doesn't exist")
+    except Exception as e:
+        increase_counter()
+        raise e
 
 
 @login_required
 def ajax_is_it_my_turn(request):
-    if not constants.GAME_SELECTED_SESSION_ID in request.session:
-        return HttpResponse(status=404)
-
     try:
-        game = Game.objects.get(
-            id=request.session[constants.GAME_SELECTED_SESSION_ID])
-    except Game.DoesNotExist:
-        return HttpResponse(status=404)
+        game = get_selected_game(request)
+    except Exception as e:
+        return HttpResponse(str(e), 400)
 
     if game.status == GameStatus.FINISHED:
         return JsonResponse({"my_turn": True})
@@ -187,14 +219,10 @@ def ajax_is_it_my_turn(request):
 
 @login_required
 def show_game_service(request):
-    if not constants.GAME_SELECTED_SESSION_ID in request.session:
-        return HttpResponse(status=404)
-
     try:
-        game = Game.objects.get(
-            id=request.session[constants.GAME_SELECTED_SESSION_ID])
-    except Game.DoesNotExist:
-        return HttpResponse(status=404)
+        game = get_selected_game(request)
+    except Exception as e:
+        return HttpResponse(str(e), 400)
 
     board = []
 
@@ -226,13 +254,13 @@ def show_game_service(request):
 @login_required
 def get_possible_moves_from_position(request, position):
     if not constants.GAME_SELECTED_SESSION_ID in request.session:
-        return HttpResponse(status=404)
+        return HttpResponse("You need to select a game first", status=404)
 
     try:
         game = Game.objects.get(
             id=request.session[constants.GAME_SELECTED_SESSION_ID])
     except Game.DoesNotExist:
-        return HttpResponse(status=404)
+        return HttpResponse("The game provided doesn't exist", status=404)
 
     valid_jumps = get_valid_jumps(position, request.user, game)
     return JsonResponse({"valid_jumps": valid_jumps})
@@ -247,7 +275,8 @@ def ajax_make_move(request, origin, target):
         game = Game.objects.get(
             id=request.session[constants.GAME_SELECTED_SESSION_ID])
     except Game.DoesNotExist:
-        return HttpResponse(status=404)
+        return HttpResponse("The game you're making a move on doesn't exist",
+                            status=404)
 
     try:
         newMove = Move(origin=origin, target=target, player=request.user,
@@ -255,15 +284,14 @@ def ajax_make_move(request, origin, target):
         newMove.save()
         return HttpResponse(status=200)
     except ValidationError:
-        return HttpResponse("El movimiento no está permitido", status=403)
+        return HttpResponse("That move isn't valid", status=403)
         # Movimiento no válido
-
 
 
 @login_required
 def move_service(request):
     if request.method == "GET" or constants.GAME_SELECTED_SESSION_ID not in request.session:
-        return HttpResponse(status=404)
+        return respond_error(request, "Wrong method or no game selected")
     elif request.method == "POST":
         moveF = MoveForm(request.POST)
         if moveF.is_valid():
@@ -273,9 +301,10 @@ def move_service(request):
                 game = Game.objects.get(
                     id=request.session[constants.GAME_SELECTED_SESSION_ID])
             except Game.DoesNotExist:
-                return HttpResponse(status=404)
+                return respond_error(request,
+                                     "The game you're making a move on doesn't exist")
             newMove.game = game
             newMove.player = request.user
             newMove.save()
             return HttpResponse(status=200)
-        return HttpResponse(status=304)
+        return respond_error(request, "The move you're making isn't valid")

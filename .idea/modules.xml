@@ -2,7 +2,7 @@
 <project version="4">
   <component name="ProjectModuleManager">
     <modules>
-      <module fileurl="file://$PROJECT_DIR$/.idea/ratonGato.iml" filepath="$PROJECT_DIR$/.idea/ratonGato.iml" />
+      <module fileurl="file://$PROJECT_DIR$/../mouse_cat/.idea/mouse_cat.iml" filepath="$PROJECT_DIR$/../mouse_cat/.idea/mouse_cat.iml" />
     </modules>
   </component>
 </project>
