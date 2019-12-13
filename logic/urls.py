@@ -1,4 +1,5 @@
 from django.urls import path
+
 from logic import views
 
 urlpatterns = [
@@ -10,7 +11,7 @@ urlpatterns = [
     path('counter_service/', views.counter_service, name='counter'),
     path('create_game_service/', views.create_game_service,
          name='create_game'),
-    path('join_game_service/', views.join_game_service, name='join_game'),
+    # path('join_game_service/', views.join_game_service, name='join_game'),
     path('select_game_service/<int:game_id>/', views.select_game_service,
          name='select_game'),
     path('select_game_service/', views.select_game_service,

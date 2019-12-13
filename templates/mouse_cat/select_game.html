@@ -5,7 +5,7 @@
         <h1>Select game</h1>
         <p>
             {% if as_cat %}
-                <h3>Games as cat:</h3>
+                <h3 class="mt-5">Games as cat:</h3>
                 <div class="container">
                     <div class="row">
                         {% for game in as_cat %}
@@ -38,48 +38,82 @@
                     </div>
                 </div>
             {% else %}
-                No games as cat
+                <h3 class="mt-5">No games as cat</h3>
             {% endif %}
         </p>
+        {% if as_mouse %}
+            <hr class="my-5">
+            <h3>Games as mouse:</h3>
+            <div class="container">
+                <div class="row">
+                    {% for game in as_mouse %}
+                        <div class="col-4 my-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Game
+                                        with {{ game.cat_user }}
+                                        ({{ game.id }})</h5>
+                                    <a href="{% url 'select_game' game.id %}"
+                                       class="btn btn-primary mb-2">Play!
+                                        »</a>
+                                    {% if not game.cat_turn %}
+                                        <div class="card-text">
+                                            <small class="text-muted">It's
+                                                <b>your
+                                                    turn</b></small>
+                                        </div>
+                                    {% else %}
+                                        <div class="card-text">
+                                            <small class="text-muted">It's
+                                                <b>{{ game.cat_user }}'s
+                                                    turn</b></small>
+                                        </div>
+                                    {% endif %}
 
-        <p>
-            {% if as_mouse %}
-                <h3>Games as mouse:</h3>
-                <div class="container">
-                    <div class="row">
-                        {% for game in as_mouse %}
-                            <div class="col-3 my-2">
-                                <div class="card">
-                                    <div class="card-body">
-                                        <h5 class="card-title">Game
-                                            with {{ game.cat_user }}
-                                            ({{ game.id }})</h5>
-                                        <a href="{% url 'select_game' game.id %}"
-                                           class="btn btn-primary">Play! »</a>
-                                        {% if not game.cat_turn %}
-                                            <div class="card-text">
-                                                <small class="text-muted">It's
-                                                    <b>your
-                                                        turn</b></small>
-                                            </div>
-                                        {% else %}
-                                            <div class="card-text">
-                                                <small class="text-muted">It's
-                                                    <b>{{ game.cat_user }}'s
-                                                        turn</b></small>
-                                            </div>
-                                        {% endif %}
-
-                                    </div>
                                 </div>
                             </div>
-                        {% endfor %}
-                    </div>
+                        </div>
+                    {% endfor %}
                 </div>
-            {% else %}
-                No games as mouse
-            {% endif %}
-        </p>
+            </div>
+        {% else %}
+            No games as mouse
+        {% endif %}
+
+        {% if new_games %}
+            <hr class="my-5">
+            <h3>New games you can join as the mouse:</h3>
+            <div class="container">
+                <div class="row">
+                    {% for game in new_games %}
+                        <div class="col-4 my-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">
+                                        <i>{{ game.cat_user }}</i>'s game
+                                        ({{ game.id }})</h5>
+                                    <a href="{% url 'select_game' game.id %}"
+                                       class="btn btn-primary mb-2">Join
+                                        »</a>
+                                    <div class="card-text">
+                                        <small class="text-muted">
+                                            <b>Waiting for a
+                                                Mouse</b></small>
+                                    </div>
+
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <h3>New games you can join as the mouse:</h3>
+            <p> There are no new games currently, do you want to create
+                yours?</p>
+            <a href="{% url 'create_game' %}" class="btn btn-primary">New
+                game</a>
+        {% endif %}
 
 
         <p><a href="{% url 'landing' %}">Return to homepage</a></p>

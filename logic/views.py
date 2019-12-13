@@ -113,6 +113,11 @@ def counter_service(request):
 
 @login_required
 def create_game_service(request):
+    new_games_by_user = Game.objects.filter(status=GameStatus.CREATED,
+                                            cat_user=request.user)
+    if new_games_by_user.count() > 0:
+        return respond_error(request,
+                             "You already have an open empty game, tell your friend to join that one instead!")
     newGame = Game.objects.create(cat_user=request.user)
     newGame.save()
 
@@ -121,25 +126,25 @@ def create_game_service(request):
     })
 
 
-@login_required
-def join_game_service(request):
-    highestIdGame = Game.objects.filter(mouse_user=None).exclude(
-        cat_user=request.user).order_by(
-        "-id").first()
-    if highestIdGame is not None:
-        highestIdGame.mouse_user = request.user
-        print("Setting highestIdGame {} mouse user to {}".format(highestIdGame,
-                                                                 request.user))
-        highestIdGame.save()
-        return render(request, "mouse_cat/join_game.html", {
-            constants.SUCCESS_MESSAGE_ID: "Joined a game with {} successfully!".format(
-                highestIdGame.cat_user)
-        })
-    else:
-        return render(request, "mouse_cat/join_game.html", {
-            constants.ERROR_MESSAGE_ID: "There are no available games",
-            "no_games": True
-        })
+# @login_required
+# def join_game_service(request):
+#     highestIdGame = Game.objects.filter(mouse_user=None).exclude(
+#         cat_user=request.user).order_by(
+#         "-id").first()
+#     if highestIdGame is not None:
+#         highestIdGame.mouse_user = request.user
+#         print("Setting highestIdGame {} mouse user to {}".format(highestIdGame,
+#                                                                  request.user))
+#         highestIdGame.save()
+#         return render(request, "mouse_cat/join_game.html", {
+#             constants.SUCCESS_MESSAGE_ID: "Joined a game with {} successfully!".format(
+#                 highestIdGame.cat_user)
+#         })
+#     else:
+#         return render(request, "mouse_cat/join_game.html", {
+#             constants.ERROR_MESSAGE_ID: "There are no available games",
+#             "no_games": True
+#         })
 
 
 def respond_error(request, exception=None):
@@ -156,6 +161,8 @@ def select_game_service(request, game_id=None):
             games_as_cat = active_games.filter(cat_user=request.user)
             games_as_mouse = active_games.filter(mouse_user=request.user)
 
+            new_games = Game.objects.filter(status=GameStatus.CREATED)
+
             if games_as_cat.count() == 0:
                 games_as_cat = None
             if games_as_mouse.count() == 0:
@@ -163,21 +170,30 @@ def select_game_service(request, game_id=None):
 
             return render(request, "mouse_cat/select_game.html", {
                 "as_cat": games_as_cat,
-                "as_mouse": games_as_mouse
+                "as_mouse": games_as_mouse,
+                "new_games": new_games
             })
         else:
             try:
-                e = Game.objects.get(id=game_id)
-                if (e.status != GameStatus.CREATED) and (
-                        e.cat_user != request.user) and (
-                        e.mouse_user != request.user):
+                g = Game.objects.get(id=game_id)
+                if (g.status != GameStatus.CREATED) and (
+                        g.cat_user != request.user) and (
+                        g.mouse_user != request.user):
                     return respond_error(request,
                                          "The game you're trying to select isn't yours")
+
+                elif g.status == GameStatus.CREATED:
+                    g.mouse_user = request.user
+                    g.save()
+
                 request.session[constants.GAME_SELECTED_SESSION_ID] = game_id
                 return redirect(reverse('show_game'))
             except Game.DoesNotExist:
                 return respond_error(request,
                                      "The game you attempted to select doesn't exist")
+            except ValidationError:
+                return respond_error(request,
+                                     "There was an error while joining the game")
 
 
 def get_selected_game(request):
@@ -187,7 +203,7 @@ def get_selected_game(request):
             raise Exception("No game has been selected")
         game = Game.objects.get(
             id=request.session[constants.GAME_SELECTED_SESSION_ID])
-        if game.cat_user != request.user and game.mouse_user != request.user:
+        if game.status != GameStatus.CREATED and game.cat_user != request.user and game.mouse_user != request.user:
             raise Exception(
                 "The user doesn't participate in the selected game")
 
@@ -205,7 +221,7 @@ def ajax_is_it_my_turn(request):
     try:
         game = get_selected_game(request)
     except Exception as e:
-        return HttpResponse(str(e), 400)
+        return respond_error(request, str(e))
 
     if game.status == GameStatus.FINISHED:
         return JsonResponse({"my_turn": True})
@@ -222,7 +238,7 @@ def show_game_service(request):
     try:
         game = get_selected_game(request)
     except Exception as e:
-        return HttpResponse(str(e), 400)
+        return respond_error(request, str(e))
 
     board = []
 
