@@ -15,6 +15,11 @@
             <h1>Game against <i>{{ game.cat_user }}</i></h1>
         {% endif %}
         <p>Game: <b>{{ game.id }}</b></p>
+        {% if request.session.current_move %}
+            <p>Move: <b
+                    id="current-move">{{ request.session.current_move }}</b>
+            </p>
+        {% endif %}
         {% csrf_token %}
         {% if is_active %}
             <p>
@@ -44,6 +49,14 @@
             {% else %}
                 <h3>Your opponent has won, better luck next time!</h3>
             {% endif %}
+            <br>
+            <div class="container">
+                <button id="replay-backwards" class="btn btn-primary">⏮
+                </button>
+                <button id="replay-play" class="btn btn-primary">►</button>
+                <button id="replay-forwards" class="btn btn-primary hidden">⏭
+                </button>
+            </div>
         {% endif %}
 
         {% if board %}

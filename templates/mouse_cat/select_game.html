@@ -79,12 +79,12 @@
                 </div>
             </div>
         {% else %}
-            No games as mouse
+            <h3 class="mt-5 mb-3">No games as mouse</h3>
         {% endif %}
 
+        <hr class="my-5">
+        <h3>New games you can join as the mouse:</h3>
         {% if new_games %}
-            <hr class="my-5">
-            <h3>New games you can join as the mouse:</h3>
             <div class="container">
                 <div class="row">
                     {% for game in new_games %}
@@ -110,11 +110,35 @@
                 </div>
             </div>
         {% else %}
-            <h3>New games you can join as the mouse:</h3>
             <p> There are no new games currently, do you want to create
                 yours?</p>
             <a href="{% url 'create_game' %}" class="btn btn-primary">New
                 game</a>
+        {% endif %}
+
+        <hr class="my-5">
+        <h3>Replays:</h3>
+        {% if finished_games %}
+            <div class="container">
+                <div class="row">
+                    {% for game in finished_games %}
+                        <div class="col-4 my-2">
+                            <div class="card">
+                                <div class="card-body">
+                                    <h5 class="card-title">Game
+                                        with {{ game.cat_user }}
+                                        ({{ game.id }})</h5>
+                                    <a href="{% url 'select_game' game.id %}"
+                                       class="btn btn-secondary mb-2">Replay
+                                        »</a>
+                                </div>
+                            </div>
+                        </div>
+                    {% endfor %}
+                </div>
+            </div>
+        {% else %}
+            <p> There are no replays currently.</p>
         {% endif %}
 
 

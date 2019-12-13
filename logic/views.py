@@ -2,6 +2,7 @@ from django.contrib import messages
 from django.contrib.auth import authenticate, login, logout
 from django.contrib.auth.decorators import login_required
 from django.core.exceptions import ValidationError
+from django.db.models import Q
 from django.http import HttpResponseForbidden, HttpResponse, JsonResponse
 from django.shortcuts import render, redirect
 from django.urls import reverse
@@ -126,7 +127,7 @@ def create_game_service(request):
                                             cat_user=request.user)
     if new_games_by_user.count() > 0:
         messages.warning(request,
-                             "You already have an open empty game, tell your friend to join that one instead!")
+                         "You already have an open empty game, tell your friend to join that one instead!")
         if "HTTP_REFERER" in request.META:
             return redirect(request.META.get("HTTP_REFERER"))
         else:
@@ -136,7 +137,7 @@ def create_game_service(request):
 
     messages.success(request, "Game created successfully")
 
-    return render(request, "mouse_cat/select_game.html")
+    return redirect(reverse('select_game'))
 
 
 # @login_required
@@ -173,8 +174,17 @@ def select_game_service(request, game_id=None):
             active_games = Game.objects.filter(status=GameStatus.ACTIVE)
             games_as_cat = active_games.filter(cat_user=request.user)
             games_as_mouse = active_games.filter(mouse_user=request.user)
+            try:
+                new_games = Game.objects.filter(status=GameStatus.CREATED)
+            except Game.DoesNotExist:
+                new_games = None
 
-            new_games = Game.objects.filter(status=GameStatus.CREATED)
+            try:
+                finished_games = Game.objects.filter(
+                    Q(status=GameStatus.FINISHED),
+                    Q(cat_user=request.user) | Q(mouse_user=request.user))
+            except Game.DoesNotExist:
+                finished_games = None
 
             if games_as_cat.count() == 0:
                 games_as_cat = None
@@ -184,7 +194,8 @@ def select_game_service(request, game_id=None):
             return render(request, "mouse_cat/select_game.html", {
                 "as_cat": games_as_cat,
                 "as_mouse": games_as_mouse,
-                "new_games": new_games
+                "new_games": new_games,
+                "finished_games": finished_games
             })
         else:
             try:
@@ -207,6 +218,7 @@ def select_game_service(request, game_id=None):
                                       g.cat_user))
 
                 request.session[constants.GAME_SELECTED_SESSION_ID] = game_id
+                request.session.current_move = 0
                 return redirect(reverse('show_game'))
             except Game.DoesNotExist:
                 messages.error(request,
@@ -249,7 +261,7 @@ def ajax_is_it_my_turn(request):
     try:
         game = get_selected_game(request)
     except Exception as e:
-        return HttpResponse(str(e), 400)
+        return HttpResponse(str(e), status=400)
 
     if game.status == GameStatus.FINISHED:
         return JsonResponse({"my_turn": True})
@@ -260,6 +272,68 @@ def ajax_is_it_my_turn(request):
     else:
         return JsonResponse({"my_turn": False})
 
+
+@login_required
+def replay_move(request, move, backwards=False):
+    if constants.GAME_SELECTED_SESSION_ID not in request.session:
+        return HttpResponse("No game is selected", status=400)
+
+    # If playing backwards, to get the move n we must undo the move n+1
+    if backwards:
+        move += 1
+    try:
+        move = Move.objects.filter(
+            game=request.session[constants.GAME_SELECTED_SESSION_ID]).order_by(
+            'date')[move]
+    except Move.DoesNotExist:
+        return HttpResponse("Could not find the requested move", status=404)
+
+    return JsonResponse({"origin": move.origin, "target": move.target},
+                        status=200)
+
+
+@login_required
+def next_move(request, backwards=0):
+    if "current_move" not in request.session:
+        return HttpResponse("Can't find the current move", status=500)
+    if constants.GAME_SELECTED_SESSION_ID not in request.session:
+        return HttpResponse("No game is selected", status=400)
+
+    if backwards == 1:
+        request.session["current_move"] -= 1
+        move_num = request.session["current_move"]
+    else:
+        move_num = request.session["current_move"]
+        request.session["current_move"] += 1
+
+    if move_num < 0 or move_num > Move.objects.filter(
+            game=request.session[constants.GAME_SELECTED_SESSION_ID]).count():
+        return HttpResponse("Move out of bounds", status=451)
+
+    try:
+        move = Move.objects.filter(
+            game=request.session[constants.GAME_SELECTED_SESSION_ID])[move_num]
+    except Move.DoesNotExist:
+        return HttpResponse("That move doesn't exist", status=404)
+    except IndexError:
+        return HttpResponse("Move out of bounds", status=451)
+
+    first = request.session["current_move"] == 0
+    last = request.session["current_move"] == Move.objects.filter(
+        game=request.session[constants.GAME_SELECTED_SESSION_ID]).count()
+    print(first)
+    print(last)
+
+    if backwards:
+        return JsonResponse(
+            {"origin": move.target, "target": move.origin, "first": first,
+             "last": last, "number": request.session["current_move"]},
+            status=200)
+    else:
+        return JsonResponse(
+            {"origin": move.origin, "target": move.target, "first": first,
+             "last": last, "number": request.session["current_move"]},
+            status=200)
 
 @login_required
 def show_game_service(request):
@@ -293,10 +367,12 @@ def show_game_service(request):
     else:
         user_is_cat = False
 
+    request.session["current_move"] = Move.objects.filter(game=game).count()
+
     return render(request, "mouse_cat/game.html",
                   {"game": game, "board": board, "move_form": form,
                    "user_is_cat": user_is_cat,
-                   "is_active": game.status == GameStatus.ACTIVE})
+                   "is_active": game.status == GameStatus.ACTIVE, })
 
 
 @login_required
@@ -343,7 +419,6 @@ def move_service(request):
     elif request.method == "POST":
         moveF = MoveForm(request.POST)
         if moveF.is_valid():
-            print("bbellowefqwef")
             newMove = moveF.save(commit=False)
             try:
                 game = Game.objects.get(
@@ -356,3 +431,7 @@ def move_service(request):
             newMove.save()
             return HttpResponse(status=200)
         return respond_error(request, "The move you're making isn't valid")
+
+
+def how_to_play(request):
+    return render(request, "mouse_cat/manual.html")

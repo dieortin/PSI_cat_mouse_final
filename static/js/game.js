@@ -30,7 +30,9 @@ $(document).ready(function () {
         let pos = $(this).attr('id').replace("square-", "");
         selectedOrigin = pos;
         requestPossibleMoves(pos)
-    })
+    });
+    $("#replay-forwards").click(replayForwards);
+    $("#replay-backwards").click(replayBackwards);
 });
 
 function removeSelectedAndPossible() {
@@ -82,6 +84,53 @@ function makeMove(origin, target) {
         },
         error: function (xhr, ajaxOptions, thrownError) {
             alert(thrownError)
+        }
+    })
+}
+
+function replayBackwards() {
+    $.ajax({
+        url: "/next_move/1",
+        success: function (result) {
+            if (result.first) {
+                $("#replay-backwards").addClass("hidden");
+            } else {
+                $("#replay-backwards").removeClass("hidden");
+            }
+            if (result.last) {
+                $("#replay-forwards").addClass("hidden");
+            } else {
+                $("#replay-forwards").removeClass("hidden");
+            }
+            $("#square-" + result.origin + " img").appendTo($("#square-" + result.target));
+            $("#current-move").text(result.number);
+        },
+        error: function (result) {
+            alert(result.responseText);
+        }
+    })
+}
+
+
+function replayForwards() {
+    $.ajax({
+        url: "/next_move/0",
+        success: function (result) {
+            if (result.first) {
+                $("#replay-backwards").addClass("hidden");
+            } else {
+                $("#replay-backwards").removeClass("hidden");
+            }
+            if (result.last) {
+                $("#replay-forwards").addClass("hidden");
+            } else {
+                $("#replay-forwards").removeClass("hidden");
+            }
+            $("#square-" + result.origin + " img").appendTo($("#square-" + result.target));
+            $("#current-move").text(result.number);
+        },
+        error: function (result) {
+            alert(result.responseText);
         }
     })
 }

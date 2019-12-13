@@ -23,5 +23,9 @@ urlpatterns = [
     path('get_possible_moves_from_position/<int:position>',
          views.get_possible_moves_from_position, name='get_possible_moves'),
     path('ajax_is_it_my_turn', views.ajax_is_it_my_turn,
-         name='ajax_is_it_my_turn')
+         name='ajax_is_it_my_turn'),
+    path('how_to_play', views.how_to_play, name='manual'),
+    path('replay_move/<int:move>/<int:reverse>', views.replay_move,
+         name='replay_move'),
+    path('next_move/<int:backwards>', views.next_move, name='next_move')
 ]
