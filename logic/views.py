@@ -175,7 +175,9 @@ def select_game_service(request, game_id=None):
             games_as_cat = active_games.filter(cat_user=request.user)
             games_as_mouse = active_games.filter(mouse_user=request.user)
             try:
-                new_games = Game.objects.filter(status=GameStatus.CREATED)
+                new_games = Game.objects.filter(
+                    status=GameStatus.CREATED).exclude(
+                    cat_user=request.user).exclude(mouse_user=request.user)
             except Game.DoesNotExist:
                 new_games = None
 
@@ -334,6 +336,7 @@ def next_move(request, backwards=0):
             {"origin": move.origin, "target": move.target, "first": first,
              "last": last, "number": request.session["current_move"]},
             status=200)
+
 
 @login_required
 def show_game_service(request):
